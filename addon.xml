@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.odysee" name="Odysee" version="0.0.1" provider-name="kpl-addons team">
+	<requires>
+		<import addon="xbmc.python" version="3.0.0"/>
+		<import addon="script.module.libka"/>
+		<import addon="script.module.inputstreamhelper"/>
+	</requires>
+	<extension point="xbmc.python.pluginsource" library="main.py">
+		<provides>video</provides>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary lang="en">Add-on for Odysee.</summary>
+		<description lang="en">Add-on for Odysee.</description>
+		<summary lang="pl">Add-on do Odysee.</summary>
+		<description lang="pl">Add-on do Odysee.</description>
+		<disclaimer lang="en">Unoffical addon</disclaimer>
+		<disclaimer lang="pl">Dodatek nieoficjalny</disclaimer>
+		<language>en,pl</language>
+		<platform>all</platform>
+		<license>MIT</license>
+		<website>https://kodi-pl.net</website>
+		<source>https://github.com/kpl-addons/plugin.video.odysee</source>
+		<assets>
+			<icon>resources/icon.png</icon>
+			<fanart>resources/fanart.jpg</fanart>
+		</assets>
+	</extension>
+</addon>
+
