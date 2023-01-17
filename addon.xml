@@ -21,8 +21,8 @@
 		<website>https://kodi-pl.net</website>
 		<source>https://github.com/kpl-addons/plugin.video.odysee</source>
 		<assets>
-			<icon>resources/media/icon.png</icon>
-			<fanart>resources/media/fanart.jpg</fanart>
+			<icon>resources/icon.png</icon>
+			<fanart>resources/fanart.jpg</fanart>
 		</assets>
 	</extension>
 </addon>
