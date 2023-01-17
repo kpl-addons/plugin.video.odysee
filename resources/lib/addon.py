@@ -7,6 +7,7 @@ from xbmcgui import ListItem
 import xbmcplugin
 
 from .site import API
+from .channel_ids import channel_ids
 
 
 class Addon(Plugin):
@@ -16,23 +17,23 @@ class Addon(Plugin):
 
     MENU = Menu(view='addons', items=[
             Menu(title='Search', call='nop'),
-            Menu(title='Featured', call=call('featured', 1)),
-            Menu(title='Popculture', call='nop'),
-            Menu(title='Artists', call='nop'),
-            Menu(title='Education', call='nop'),
-            Menu(title='Lifestyle', call='nop'),
-            Menu(title='Spooky', call='nop'),
-            Menu(title='Gaming', call='nop'),
-            Menu(title='Tech', call='nop'),
-            Menu(title='Comedy', call='nop'),
-            Menu(title='Music', call='nop'),
-            Menu(title='Sports', call='nop'),
-            Menu(title='Universe', call='nop'),
-            Menu(title='Finance', call='nop'),
-            Menu(title='Spirituality', call='nop'),
-            Menu(title='News', call='nop'),
-            Menu(title='Docs', call='nop'),
-            Menu(title='Rabbithole', call='nop')
+            Menu(title='Featured', call=call('listing', 1, 'featured')),
+            Menu(title='Popculture', call=call('listing', 1, 'popculture')),
+            Menu(title='Artists', call=call('listing', 1, 'artists')),
+            Menu(title='Education', call=call('listing', 1, 'education')),
+            Menu(title='Lifestyle', call=call('listing', 1, 'lifestyle')),
+            Menu(title='Spooky', call=call('listing', 1, 'spooky')),
+            Menu(title='Gaming', call=call('listing', 1, 'gaming')),
+            Menu(title='Tech', call=call('listing', 1, 'tech')),
+            Menu(title='Comedy', call=call('listing', 1, 'comedy')),
+            Menu(title='Music', call=call('listing', 1, 'music')),
+            Menu(title='Sports', call=call('listing', 1, 'sports')),
+            Menu(title='Universe', call=call('listing', 1, 'universe')),
+            Menu(title='Finance', call=call('listing', 1, 'finance')),
+            Menu(title='Spirituality', call=call('listing', 1, 'spirituality')),
+            Menu(title='News', call=call('listing', 1, 'news')),
+            Menu(title='Docs', call=call('listing', 1, 'docs')),
+            Menu(title='Rabbithole', call=call('listing', 1, 'rabbithole'))
         ])
 
     def home(self):
@@ -48,16 +49,17 @@ class Addon(Plugin):
             'fanart': landscape
         }
 
-    def featured(self, page: PathArg[int]):
+    def listing(self, page: PathArg[int], ids):
+        channels = channel_ids().get(ids, [])
         with self.directory(view='movies') as kdir:
-            for feat in self.api.get_featured(page):
-                kdir.play(feat["value"]["title"],
+            for cat in self.api.get_category(page, channels):
+                kdir.play(cat["value"]["title"],
                           call(self._play_stream,
-                               feat["value"]["title"],
-                               feat['canonical_url'],
-                               feat['meta']['creation_timestamp']),
-                          art=self.get_art(feat))
-            kdir.menu('Next Page', call(self.featured, page + 1))
+                               cat["value"]["title"],
+                               cat['canonical_url'],
+                               cat['meta']['creation_timestamp']),
+                          art=self.get_art(cat))
+            kdir.menu('Next Page', call(self.listing, page + 1, ids))
 
     def _play_stream(self, title, canon_url, id):
         stream_url = self.api.streamable(canon_url, id)['result']
