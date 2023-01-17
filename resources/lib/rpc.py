@@ -1,13 +1,10 @@
-from libka.logs import log
-
-
-def json_rpc():
+def json_rpc(**kwargs):
     return {
         "jsonrpc": "2.0",
         "method": "claim_search",
         "params": {
             "page_size": 24,
-            "page": 1,
+            "page": kwargs['page'],
             "claim_type": ["stream", "repost", "channel"],
             "no_totals": True,
             "not_channel_ids": [],

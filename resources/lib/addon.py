@@ -16,7 +16,7 @@ class Addon(Plugin):
 
     MENU = Menu(view='addons', items=[
             Menu(title='Search', call='nop'),
-            Menu(title='Featured', call='featured'),
+            Menu(title='Featured', call=call('featured', 1)),
             Menu(title='Popculture', call='nop'),
             Menu(title='Artists', call='nop'),
             Menu(title='Education', call='nop'),
@@ -48,15 +48,16 @@ class Addon(Plugin):
             'fanart': landscape
         }
 
-    def featured(self):
-        with self.directory() as kdir:
-            for feat in self.api.get_featured():
+    def featured(self, page: PathArg[int]):
+        with self.directory(view='movies') as kdir:
+            for feat in self.api.get_featured(page):
                 kdir.play(feat["value"]["title"],
                           call(self._play_stream,
                                feat["value"]["title"],
                                feat['canonical_url'],
                                feat['meta']['creation_timestamp']),
                           art=self.get_art(feat))
+            kdir.menu('Next Page', call(self.featured, page + 1))
 
     def _play_stream(self, title, canon_url, id):
         stream_url = self.api.streamable(canon_url, id)['result']
