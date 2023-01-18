@@ -2,6 +2,7 @@ from libka import Plugin, call, PathArg
 from libka.logs import log
 from libka.menu import Menu, MenuItems
 from libka.resources import Media, Resources
+from libka.search import Search, search
 
 from xbmcgui import ListItem
 import xbmcplugin
@@ -16,7 +17,7 @@ class Addon(Plugin):
         self.api = API()
 
     MENU = Menu(view='addons', items=[
-            Menu(title='Search', call='nop'),
+            Menu(title='Search', call='search'),
             Menu(title='Featured', call=call('listing', 1, 'featured')),
             Menu(title='Popculture', call=call('listing', 1, 'popculture')),
             Menu(title='Artists', call=call('listing', 1, 'artists')),
@@ -41,6 +42,21 @@ class Addon(Plugin):
 
     def nop(self):
         pass
+
+    @search.folder
+    def search_folder(self, query):
+        claim = self.api.searching(query)
+        urls = [f"lbry://{x['name']}#{x['claimId']}" for x in claim]
+
+        resolve = self.api.resolve(urls)
+        with self.directory(view='movies') as kdir:
+            for u in urls:
+                title = resolve['result'][u]['value']['title']
+                canon_url = resolve['result'][u]['canonical_url']
+                meta = resolve['result'][u]['meta']['creation_timestamp']
+                kdir.play(title,
+                          call(self._play_stream, title, canon_url, meta),
+                          art=self.get_art(resolve['result'][u]))
 
     def get_art(self, response):
         landscape = response['value']['thumbnail']['url']
