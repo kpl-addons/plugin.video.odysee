@@ -85,10 +85,11 @@ class Addon(Plugin):
 
     def get_art(self, response):
         thumbnail = response['value'].get('thumbnail', {}).get('url')
-        return {
-            'icon': self.media.image('icon'),
-            'fanart': thumbnail
-        }
+        if thumbnail.startswith('https://thumbnails.lbry.com'):
+            return {
+                'icon': self.media.image('icon'),
+                'fanart': thumbnail
+            }
 
     def listing(self, page: PathArg[int], ids, sorting):
         channels = channel_ids().get(ids, [])
