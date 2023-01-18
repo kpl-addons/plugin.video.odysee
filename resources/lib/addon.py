@@ -63,19 +63,22 @@ class Addon(Plugin):
         resolve = self.api.resolve(urls)
         with self.directory(view='movies') as kdir:
             for u in urls:
-                title = resolve['result'][u]['value']['title']
-                summary = resolve['result'][u]['value'].get('description', '')
+                value = resolve['result'][u]['value']
+                title = value['title']
+                summary = value.get('description', '')
                 canon_url = resolve['result'][u]['canonical_url']
                 meta = resolve['result'][u]['meta']['creation_timestamp']
                 premiered = datetime.datetime.fromtimestamp(int(meta))
-                tags = ' / '.join(resolve['result'][u]['value'].get('tags', []))
+                tags = ' / '.join(value.get('tags', []))
+                duration = value.get('video', {}).get('duration')
                 info = {
                     'title': title,
                     'plot': summary,
                     'premiered': premiered.strftime("%Y-%m-%d"),
                     'date': premiered.strftime("%Y-%m-%d"),
                     'year': premiered.strftime("%Y"),
-                    'genre': tags
+                    'genre': tags,
+                    'duration': duration
                 }
                 art = self.get_art(resolve['result'][u])
                 kdir.play(title,
@@ -97,15 +100,18 @@ class Addon(Plugin):
             kdir.menu('Back to [B]main menu[/B]', call(self.home))
             kdir.menu('[B]== Order by ==[/B]', call(self.sort_listing, ids))
             for cat in self.api.get_category(sorting, page, channels):
+                value = cat['value']
                 ts = cat['meta']['creation_timestamp']
                 premiered = datetime.datetime.fromtimestamp(int(ts))
+                duration = value.get('video', {}).get('duration')
                 info = {
-                    'title': cat['value']['title'],
-                    'plot': cat['value'].get('description', ''),
+                    'title': value['title'],
+                    'plot': value.get('description', ''),
                     'premiered': premiered.strftime("%Y-%m-%d"),
                     'date': premiered.strftime("%Y-%m-%d"),
                     'year': premiered.strftime("%Y"),
-                    'genre': ' / '.join(cat['value'].get('tags', []))
+                    'genre': ' / '.join(value.get('tags', [])),
+                    'duration': duration
                 }
                 art = self.get_art(cat)
                 kdir.play(cat["value"]["title"],
