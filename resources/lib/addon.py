@@ -86,7 +86,7 @@ class Addon(Plugin):
                 premiered = datetime.datetime.fromtimestamp(int(ts))
                 info = {
                     'title': cat['value']['title'],
-                    'plot': cat['value']['description'],
+                    'plot': cat['value'].get('description', ''),
                     'premiered': premiered.strftime("%Y-%m-%d"),
                     'date': premiered.strftime("%Y-%m-%d"),
                     'year': premiered.strftime("%Y"),
