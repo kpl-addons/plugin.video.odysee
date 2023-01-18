@@ -64,7 +64,8 @@ class Addon(Plugin):
         with self.directory(view='movies') as kdir:
             for u in urls:
                 value = resolve['result'][u]['value']
-                title = value['title']
+                title = value['title'].encode(encoding="ascii",
+                                              errors="replace")
                 summary = value.get('description', '')
                 canon_url = resolve['result'][u]['canonical_url']
                 meta = resolve['result'][u]['meta']['creation_timestamp']
@@ -72,7 +73,7 @@ class Addon(Plugin):
                 tags = ' / '.join(value.get('tags', []))
                 duration = value.get('video', {}).get('duration')
                 info = {
-                    'title': title,
+                    'title': title.decode('ascii'),
                     'plot': summary,
                     'premiered': premiered.strftime("%Y-%m-%d"),
                     'date': premiered.strftime("%Y-%m-%d"),
@@ -81,18 +82,17 @@ class Addon(Plugin):
                     'duration': duration
                 }
                 art = self.get_art(resolve['result'][u])
-                kdir.play(title,
-                          call(self._play_stream, title, canon_url, meta),
+                kdir.play(title.decode('ascii'),
+                          call(self._play_stream, title.decode('ascii'), canon_url, meta),
                           art=art,
                           info=info)
 
     def get_art(self, response):
         thumbnail = response['value'].get('thumbnail', {}).get('url')
-        if thumbnail.startswith('https://thumbnails.lbry.com'):
-            return {
-                'icon': self.media.image('icon'),
-                'fanart': thumbnail
-            }
+        return {
+            'icon': self.media.image('icon'),
+            'fanart': thumbnail
+        }
 
     def listing(self, page: PathArg[int], ids, sorting):
         channels = channel_ids().get(ids, [])
@@ -101,11 +101,13 @@ class Addon(Plugin):
             kdir.menu('[B]== Order by ==[/B]', call(self.sort_listing, ids))
             for cat in self.api.get_category(sorting, page, channels):
                 value = cat['value']
+                title = value['title'].encode(encoding="ascii",
+                                              errors="replace")
                 ts = cat['meta']['creation_timestamp']
                 premiered = datetime.datetime.fromtimestamp(int(ts))
                 duration = value.get('video', {}).get('duration')
                 info = {
-                    'title': value['title'],
+                    'title': title.decode('ascii'),
                     'plot': value.get('description', ''),
                     'premiered': premiered.strftime("%Y-%m-%d"),
                     'date': premiered.strftime("%Y-%m-%d"),
@@ -114,9 +116,9 @@ class Addon(Plugin):
                     'duration': duration
                 }
                 art = self.get_art(cat)
-                kdir.play(cat["value"]["title"],
+                kdir.play(title.decode('ascii'),
                           call(self._play_stream,
-                               cat["value"]["title"],
+                               title.decode('ascii'),
                                cat['canonical_url'],
                                cat['meta']['creation_timestamp']),
                           art=art,
