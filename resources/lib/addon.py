@@ -6,6 +6,7 @@ from libka.search import Search, search
 
 from xbmcgui import ListItem
 import xbmcplugin
+import datetime
 
 from .site import API
 from .channel_ids import channel_ids
@@ -52,11 +53,23 @@ class Addon(Plugin):
         with self.directory(view='movies') as kdir:
             for u in urls:
                 title = resolve['result'][u]['value']['title']
+                summary = resolve['result'][u]['value'].get('description', '')
                 canon_url = resolve['result'][u]['canonical_url']
                 meta = resolve['result'][u]['meta']['creation_timestamp']
+                premiered = datetime.datetime.fromtimestamp(int(meta))
+                tags = ' / '.join(resolve['result'][u]['value'].get('tags', []))
+                info = {
+                    'title': title,
+                    'plot': summary,
+                    'premiered': premiered.strftime("%Y-%m-%d"),
+                    'date': premiered.strftime("%Y-%m-%d"),
+                    'year': premiered.strftime("%Y"),
+                    'genre': tags
+                }
                 kdir.play(title,
                           call(self._play_stream, title, canon_url, meta),
-                          art=self.get_art(resolve['result'][u]))
+                          art=self.get_art(resolve['result'][u]),
+                          info=info)
 
     def get_art(self, response):
         landscape = response['value']['thumbnail']['url']
@@ -69,12 +82,23 @@ class Addon(Plugin):
         channels = channel_ids().get(ids, [])
         with self.directory(view='movies') as kdir:
             for cat in self.api.get_category(page, channels):
+                ts = cat['meta']['creation_timestamp']
+                premiered = datetime.datetime.fromtimestamp(int(ts))
+                info = {
+                    'title': cat['value']['title'],
+                    'plot': cat['value']['description'],
+                    'premiered': premiered.strftime("%Y-%m-%d"),
+                    'date': premiered.strftime("%Y-%m-%d"),
+                    'year': premiered.strftime("%Y"),
+                    'genre': ' / '.join(cat['value'].get('tags', []))
+                }
                 kdir.play(cat["value"]["title"],
                           call(self._play_stream,
                                cat["value"]["title"],
                                cat['canonical_url'],
                                cat['meta']['creation_timestamp']),
-                          art=self.get_art(cat))
+                          art=self.get_art(cat),
+                          info=info)
             kdir.menu('Next Page', call(self.listing, page + 1, ids))
 
     def _play_stream(self, title, canon_url, id):
