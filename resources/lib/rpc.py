@@ -24,4 +24,3 @@ def stream_rpc(**kwargs):
         "method": "get",
         "params": {"uri": kwargs['canon_url'],
                    "environment": "live"}}
-
