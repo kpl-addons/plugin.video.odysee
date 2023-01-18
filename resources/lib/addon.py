@@ -63,31 +63,34 @@ class Addon(Plugin):
         resolve = self.api.resolve(urls)
         with self.directory(view='movies') as kdir:
             for u in urls:
-                value = resolve['result'][u]['value']
-                title = value['title'].encode(encoding="ascii",
-                                              errors="replace")
-                summary = value.get('description', '')
                 canon_url = resolve['result'][u]['canonical_url']
                 meta = resolve['result'][u]['meta']['creation_timestamp']
-                premiered = datetime.datetime.fromtimestamp(int(meta))
-                tags = ' / '.join(value.get('tags', []))
-                duration = value.get('video', {}).get('duration')
-                info = {
-                    'title': title.decode('ascii'),
-                    'plot': summary,
-                    'premiered': premiered.strftime("%Y-%m-%d"),
-                    'date': premiered.strftime("%Y-%m-%d"),
-                    'year': premiered.strftime("%Y"),
-                    'genre': tags,
-                    'duration': duration
-                }
-                art = self.get_art(resolve['result'][u])
-                kdir.play(title.decode('ascii'),
-                          call(self._play_stream, title.decode('ascii'), canon_url, meta),
+                info = self._set_info(resolve['result'][u])
+                art = self._get_art(resolve['result'][u])
+                kdir.play(info['title'], call(self._play_stream, info['title'],
+                                              canon_url, meta),
                           art=art,
                           info=info)
 
-    def get_art(self, response):
+    def _set_info(self, response):
+        value = response['value']
+        title = value['title'].encode(encoding="ascii", errors="replace")
+        summary = value.get('description', '')
+        meta = response['meta']['creation_timestamp']
+        premiered = datetime.datetime.fromtimestamp(int(meta))
+        tags = ' / '.join(value.get('tags', []))
+        duration = value.get('video', {}).get('duration')
+        return {
+            'title': title.decode('ascii'),
+            'plot': summary,
+            'premiered': premiered.strftime("%Y-%m-%d"),
+            'date': premiered.strftime("%Y-%m-%d"),
+            'year': premiered.strftime("%Y"),
+            'genre': tags,
+            'duration': duration
+        }
+
+    def _get_art(self, response):
         thumbnail = response['value'].get('thumbnail', {}).get('url')
         return {
             'icon': self.media.image('icon'),
@@ -100,27 +103,12 @@ class Addon(Plugin):
             kdir.menu('Back to [B]main menu[/B]', call(self.home))
             kdir.menu('[B]== Order by ==[/B]', call(self.sort_listing, ids))
             for cat in self.api.get_category(sorting, page, channels):
-                value = cat['value']
-                title = value['title'].encode(encoding="ascii",
-                                              errors="replace")
-                ts = cat['meta']['creation_timestamp']
-                premiered = datetime.datetime.fromtimestamp(int(ts))
-                duration = value.get('video', {}).get('duration')
-                info = {
-                    'title': title.decode('ascii'),
-                    'plot': value.get('description', ''),
-                    'premiered': premiered.strftime("%Y-%m-%d"),
-                    'date': premiered.strftime("%Y-%m-%d"),
-                    'year': premiered.strftime("%Y"),
-                    'genre': ' / '.join(value.get('tags', [])),
-                    'duration': duration
-                }
-                art = self.get_art(cat)
-                kdir.play(title.decode('ascii'),
-                          call(self._play_stream,
-                               title.decode('ascii'),
-                               cat['canonical_url'],
-                               cat['meta']['creation_timestamp']),
+                meta = cat['meta']['creation_timestamp']
+                info = self._set_info(cat)
+                art = self._get_art(cat)
+                kdir.play(info['title'], call(self._play_stream,
+                                              info['title'],
+                                              cat['canonical_url'], meta),
                           art=art,
                           info=info)
             kdir.menu('Next Page', call(self.listing, page + 1, ids, sorting))
