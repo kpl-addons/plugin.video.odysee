@@ -11,9 +11,9 @@ class API(Site):
         self.base_url = base
         self.search_link = 'https://lighthouse.odysee.tv/search'
 
-    def _post(self, end, page=None, ids=None, json=None):
+    def _post(self, end, page=None, ids=None, sorting=None, json=None):
         if json is None:
-            json = json_rpc(page=page, channel_ids=ids)
+            json = json_rpc(page=page, channel_ids=ids, sorting=sorting)
         else:
             json = json
         return self.jpost(self.base_url + end, json=json)
@@ -25,9 +25,10 @@ class API(Site):
         url = 'proxy?m=get'
         return self._post(url, json=stream_rpc(canon_url=canon_url, id=id))
 
-    def get_category(self, page, *args):
+    def get_category(self, sort, page, *args):
         url = 'proxy?m=claim_search'
-        return self._post(url, page=page, ids=args[0])['result']['items']
+        return self._post(url, sorting=sort, page=page,
+                          ids=args[0])['result']['items']
 
     def searching(self, query):
         param = f'?s=${query}&size=40&from=0&nsfw=false&uid=744469412'

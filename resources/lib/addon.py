@@ -19,23 +19,34 @@ class Addon(Plugin):
 
     MENU = Menu(view='addons', items=[
             Menu(title='Search', call='search'),
-            Menu(title='Featured', call=call('listing', 1, 'featured')),
-            Menu(title='Popculture', call=call('listing', 1, 'popculture')),
-            Menu(title='Artists', call=call('listing', 1, 'artists')),
-            Menu(title='Education', call=call('listing', 1, 'education')),
-            Menu(title='Lifestyle', call=call('listing', 1, 'lifestyle')),
-            Menu(title='Spooky', call=call('listing', 1, 'spooky')),
-            Menu(title='Gaming', call=call('listing', 1, 'gaming')),
-            Menu(title='Tech', call=call('listing', 1, 'tech')),
-            Menu(title='Comedy', call=call('listing', 1, 'comedy')),
-            Menu(title='Music', call=call('listing', 1, 'music')),
-            Menu(title='Sports', call=call('listing', 1, 'sports')),
-            Menu(title='Universe', call=call('listing', 1, 'universe')),
-            Menu(title='Finance', call=call('listing', 1, 'finance')),
-            Menu(title='Spirituality', call=call('listing', 1, 'spirituality')),
-            Menu(title='News', call=call('listing', 1, 'news')),
-            Menu(title='Docs', call=call('listing', 1, 'docs')),
-            Menu(title='Rabbithole', call=call('listing', 1, 'rabbithole'))
+            Menu(title='Featured', call=call('listing', 1, 'featured',
+                                             'trending')),
+            Menu(title='Popculture', call=call('listing', 1, 'popculture',
+                                               'trending')),
+            Menu(title='Artists', call=call('listing', 1, 'artists',
+                                            'trending')),
+            Menu(title='Education', call=call('listing', 1, 'education',
+                                              'trending')),
+            Menu(title='Lifestyle', call=call('listing', 1, 'lifestyle',
+                                              'trending')),
+            Menu(title='Spooky', call=call('listing', 1, 'spooky',
+                                           'trending')),
+            Menu(title='Gaming', call=call('listing', 1, 'gaming',
+                                           'trending')),
+            Menu(title='Tech', call=call('listing', 1, 'tech', 'trending')),
+            Menu(title='Comedy', call=call('listing', 1, 'comedy', 'trending')),
+            Menu(title='Music', call=call('listing', 1, 'music', 'trending')),
+            Menu(title='Sports', call=call('listing', 1, 'sports', 'trending')),
+            Menu(title='Universe', call=call('listing', 1, 'universe',
+                                             'trending')),
+            Menu(title='Finance', call=call('listing', 1, 'finance',
+                                            'trending')),
+            Menu(title='Spirituality', call=call('listing', 1, 'spirituality',
+                                                 'trending')),
+            Menu(title='News', call=call('listing', 1, 'news', 'trending')),
+            Menu(title='Docs', call=call('listing', 1, 'docs', 'trending')),
+            Menu(title='Rabbithole', call=call('listing', 1, 'rabbithole',
+                                               'trending'))
         ])
 
     def home(self):
@@ -66,22 +77,25 @@ class Addon(Plugin):
                     'year': premiered.strftime("%Y"),
                     'genre': tags
                 }
+                art = self.get_art(resolve['result'][u])
                 kdir.play(title,
                           call(self._play_stream, title, canon_url, meta),
-                          art=self.get_art(resolve['result'][u]),
+                          art=art,
                           info=info)
 
     def get_art(self, response):
-        landscape = response['value']['thumbnail']['url']
+        thumbnail = response['value'].get('thumbnail', {}).get('url')
         return {
             'icon': self.media.image('icon'),
-            'fanart': landscape
+            'fanart': thumbnail
         }
 
-    def listing(self, page: PathArg[int], ids):
+    def listing(self, page: PathArg[int], ids, sorting):
         channels = channel_ids().get(ids, [])
         with self.directory(view='movies') as kdir:
-            for cat in self.api.get_category(page, channels):
+            kdir.menu('Back to [B]main menu[/B]', call(self.home))
+            kdir.menu('[B]== Order by ==[/B]', call(self.sort_listing, ids))
+            for cat in self.api.get_category(sorting, page, channels):
                 ts = cat['meta']['creation_timestamp']
                 premiered = datetime.datetime.fromtimestamp(int(ts))
                 info = {
@@ -92,14 +106,25 @@ class Addon(Plugin):
                     'year': premiered.strftime("%Y"),
                     'genre': ' / '.join(cat['value'].get('tags', []))
                 }
+                art = self.get_art(cat)
                 kdir.play(cat["value"]["title"],
                           call(self._play_stream,
                                cat["value"]["title"],
                                cat['canonical_url'],
                                cat['meta']['creation_timestamp']),
-                          art=self.get_art(cat),
+                          art=art,
                           info=info)
-            kdir.menu('Next Page', call(self.listing, page + 1, ids))
+            kdir.menu('Next Page', call(self.listing, page + 1, ids, sorting))
+
+    def sort_listing(self, ids):
+        with self.directory(view='addons') as kdir:
+            kdir.menu('Back to [B]main menu[/B]', call(self.home))
+            kdir.menu('Sort by [B]newest[/B]', call(self.listing, 1, ids,
+                                                    'newest'))
+            kdir.menu('Sort by [B]popular[/B]', call(self.listing, 1, ids,
+                                                     'trending'))
+            kdir.menu('Sort by [B]top[/B]', call(self.listing, 1, ids,
+                                                 'top'))
 
     def _play_stream(self, title, canon_url, id):
         stream_url = self.api.streamable(canon_url, id)['result']

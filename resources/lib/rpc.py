@@ -1,3 +1,10 @@
+sorting = {
+    'newest': ["release_time"],
+    'trending': ["trending_group", "trending_mixed"],
+    'top': ["effective_amount"]
+}
+
+
 def json_rpc(**kwargs):
     return {
         "jsonrpc": "2.0",
@@ -8,7 +15,7 @@ def json_rpc(**kwargs):
             "claim_type": ["stream", "repost", "channel"],
             "no_totals": True,
             "not_channel_ids": [],
-            "order_by": ["trending_group", "trending_mixed"],
+            "order_by": sorting[kwargs['sorting']],
             "remove_duplicates": True,
             "has_source": True,
             "limit_claims_per_channel":
